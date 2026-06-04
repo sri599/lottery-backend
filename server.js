@@ -10,6 +10,8 @@ const customerRoutes =
   require('./routes/customerRoutes');
   const authRoutes =
   require('./routes/authRoutes');
+  const messageRoutes =
+  require('./routes/messageRoutes');
 
 connectDB();
 
@@ -24,6 +26,10 @@ app.use('/auth', authRoutes);
 app.get('/', (req, res) => {
   res.send('Lottery Backend Running');
 });
+app.use(
+  '/messages',
+  messageRoutes
+);
 
 app.listen(process.env.PORT, () => {
   console.log(
