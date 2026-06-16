@@ -126,5 +126,110 @@ router.post('/bulk-send', async (req, res) => {
     });
   }
 });
+router.post('/bulk-media', async (req, res) => {
+  try {
+    const {
+      phones,
+      imageUrl,
+      message,
+    } = req.body;
+
+    if (!phones || !Array.isArray(phones)) {
+      return res.status(400).json({
+        success: false,
+        message: 'phones must be an array',
+      });
+    }
+
+    const results = [];
+
+    for (const phone of phones) {
+      try {
+        let payload;
+
+        // Image + Caption
+        if (imageUrl && message) {
+          payload = {
+            messaging_product: 'whatsapp',
+            to: phone,
+            type: 'image',
+            image: {
+              link: imageUrl,
+              caption: message,
+            },
+          };
+        }
+
+        // Image Only
+        else if (imageUrl) {
+          payload = {
+            messaging_product: 'whatsapp',
+            to: phone,
+            type: 'image',
+            image: {
+              link: imageUrl,
+            },
+          };
+        }
+
+        // Message Only
+        else if (message) {
+          payload = {
+            messaging_product: 'whatsapp',
+            to: phone,
+            type: 'text',
+            text: {
+              body: message,
+            },
+          };
+        } else {
+          continue;
+        }
+
+        const response = await axios.post(
+          `https://graph.facebook.com/v25.0/${process.env.PHONE_NUMBER_ID}/messages`,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        results.push({
+          phone,
+          success: true,
+          messageId:
+            response.data?.messages?.[0]?.id,
+        });
+      } catch (err) {
+        results.push({
+          phone,
+          success: false,
+          error:
+            err.response?.data || err.message,
+        });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      total: phones.length,
+      sent: results.filter(
+        x => x.success
+      ).length,
+      failed: results.filter(
+        x => !x.success
+      ).length,
+      results,
+    });
+  } catch (e) {
+    res.status(500).json({
+      success: false,
+      error: e.message,
+    });
+  }
+});
 
 module.exports = router;
