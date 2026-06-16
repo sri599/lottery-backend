@@ -12,7 +12,8 @@ const customerRoutes =
   require('./routes/authRoutes');
   const messageRoutes =
   require('./routes/messageRoutes');
-
+const whatsappRoutes =
+  require('./routes/whatsappRoutes');
 connectDB();
 
 app.use(cors());
@@ -22,6 +23,10 @@ app.use(
   customerRoutes
 );
 app.use('/auth', authRoutes);
+app.use(
+  '/whatsapp',
+  whatsappRoutes
+);
 
 app.get('/', (req, res) => {
   res.send('Lottery Backend Running');
